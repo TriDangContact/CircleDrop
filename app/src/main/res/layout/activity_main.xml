@@ -7,20 +7,21 @@
     android:orientation="vertical"
     tools:context=".CircleDropMain">
 
-    <LinearLayout
+    <RelativeLayout
+        android:id="@+id/gameView"
         android:layout_width="match_parent"
         android:layout_height="540dp"
         android:layout_gravity="top">
-    </LinearLayout>
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:background="@drawable/command_bar_border"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="10dp"
-        android:background="@drawable/command_bar_border">
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -30,40 +31,40 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:text="@string/score"
-                android:textColor="@color/colorBlack"
-                android:layout_margin="5dp"/>
+                android:textColor="@color/colorBlack" />
 
             <TextView
                 android:id="@+id/scoreView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="0"
+                android:layout_margin="5dp"
                 android:textColor="@color/colorBlack"
-                android:layout_margin="5dp"/>
+                tools:text="0" />
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:gravity="center"
-            android:layout_marginHorizontal="20dp">
+            android:layout_marginHorizontal="20dp"
+            android:gravity="center">
 
             <Button
-                android:id="@+id/pauseButton"
+                android:id="@+id/leftButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/pause"
+                android:layout_margin="5dp"
                 android:background="@drawable/button_border"
-                android:layout_margin="5dp"/>
+                android:text="@string/pause" />
 
             <Button
-                android:id="@+id/endButton"
+                android:id="@+id/rightButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/end"
+                android:layout_margin="5dp"
                 android:background="@drawable/button_border"
-                android:layout_margin="5dp"/>
+                android:text="@string/end" />
         </LinearLayout>
 
         <LinearLayout
@@ -74,17 +75,17 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_margin="5dp"
                 android:text="@string/lives"
-                android:textColor="@color/colorBlack"
-                android:layout_margin="5dp"/>
+                android:textColor="@color/colorBlack" />
 
             <TextView
                 android:id="@+id/livesView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                tools:text="0"
+                android:layout_margin="5dp"
                 android:textColor="@color/colorBlack"
-                android:layout_margin="5dp"/>
+                tools:text="0" />
         </LinearLayout>
 
     </LinearLayout>

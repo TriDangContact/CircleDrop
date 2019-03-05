@@ -2,6 +2,9 @@
     <string name="app_name">CircleDrop</string>
     <string name="score">Score: </string>
     <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
     <string name="end">End</string>
+    <string name="new_string">New</string>
+    <string name="start">Start</string>
     <string name="lives">Lives: </string>
 </resources>
