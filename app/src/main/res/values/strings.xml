@@ -7,4 +7,5 @@
     <string name="new_string">New</string>
     <string name="start">Start</string>
     <string name="lives">Lives: </string>
+    <string name="circle_limit_string">Reached Circle Limit!</string>
 </resources>

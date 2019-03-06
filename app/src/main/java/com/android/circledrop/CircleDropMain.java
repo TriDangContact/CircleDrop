@@ -11,12 +11,14 @@ import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.ViewManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class CircleDropMain extends AppCompatActivity {
 
@@ -27,15 +29,13 @@ public class CircleDropMain extends AppCompatActivity {
     private final static String PAUSE_STATE = "pausestate";
     private final static String END_STATE = "endstate";
     private final static String NEW_STATE = "newstate";
-    private final static int PLAYER_W = 75;
-    private final static int PLAYER_H = 75;
 
     private RelativeLayout mGameView;
     private Button mLeftButton;
     private Button mRightButton;
     private TextView mScoreView;
     private TextView mLivesView;
-    private LinearLayout mPlayerView;
+    private Circle mObstacleCircle;
 
     private int mCurrentScore;
     private int mCurrentLives;
@@ -44,13 +44,18 @@ public class CircleDropMain extends AppCompatActivity {
     private boolean mEndState;
     private boolean mNewState;
     private boolean mIsInMotion;
+    private boolean mIsFingerDown;
+    private boolean mEndGame;
     private int mScreenWidth;
     private int mScreenHeight;
-    private float mPlayerX;
-    private float mPlayerY;
-    private float eventX;
+    private float mEventX;
+    private float mEventY;
 
 
+    private GamePlayView mGamePlayView;
+
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,8 +68,6 @@ public class CircleDropMain extends AppCompatActivity {
         mLivesView = (TextView) findViewById(R.id.livesView);
 
         getScreenSize();
-        mPlayerX = (mScreenWidth/2) - (PLAYER_W/2);
-        mPlayerY = 50;    //1250
 
         changeStateTo(NEW_STATE);
         newGame();
@@ -97,9 +100,9 @@ public class CircleDropMain extends AppCompatActivity {
         // when End is pressed, game ends and text changes to New
         // when New is pressed, score sets to zero, lives to 3, left button is Pause, and text
         // changes to Start
-        // at this point, player can place white circles on screen by touching screen, the longer
+        // at this point, player can place obstacle circles on screen by touching screen, the longer
         // the touch, the larger the circle
-        // when Start is pressed, white circles start falling, text changes to End
+        // when Start is pressed, obstacle circles start falling, text changes to End
         mRightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -120,13 +123,77 @@ public class CircleDropMain extends AppCompatActivity {
                     newGame();
                     updateCommandBar();
                 }
-
             }
         });
 
+        // display the black circle with onTouch listener to listen for player action
+        mGameView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                mEventX = event.getX();
+                mEventY = event.getY();
+
+                int pointerIndex = event.getActionIndex();
+                int pointerId = event.getPointerId(pointerIndex);
+                int maskedAction = event.getActionMasked();
+
+                if (mStartState) {
+                    switch (maskedAction) {
+                        case MotionEvent.ACTION_DOWN:
+                            Log.d(LOG_TAG, "StartState ACTION DOWN");
+                            mIsInMotion = true;
+                            movePlayerCircle(mEventX);
+                            return true;
+                        case MotionEvent.ACTION_POINTER_DOWN:
+                            mIsInMotion = false;
+                            break;
+                        case MotionEvent.ACTION_POINTER_UP:
+                            mIsInMotion = true;
+                            mEventX = event.getX();
+                            movePlayerCircle(mEventX);
+                            break;
+                        case MotionEvent.ACTION_MOVE:
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            //stop moving the circle
+                            mIsInMotion = false;
+                            Log.d(LOG_TAG, "StartState ACTION UP");
+                            break;
+                    }
+                }
+                else if (mNewState) {
+                    switch (maskedAction) {
+                        case MotionEvent.ACTION_DOWN:
+                            // create obstacle circle and increase its radius
+                            Log.d(LOG_TAG, "NewState ACTION DOWN");
+                            mIsFingerDown = true;
+                            mObstacleCircle = createWhiteCircle(mEventX, mEventY);
+                            increaseRadius(mObstacleCircle);
+                            return true;
+                        case MotionEvent.ACTION_MOVE:
+                            break;
+                        case MotionEvent.ACTION_UP:
+                            // stop increasing the radius of the obstacle circle
+                            Log.d(LOG_TAG, "NewState ACTION UP");
+                            mIsFingerDown = false;
+
+                            break;
+                    }
+                }
+            return false;
+            }
+        });
     }
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        changeStateTo(PAUSE_STATE);
+        pauseGame();
+        updateCommandBar();
+    }
 
+    //should be called every time a button is clicked
     private void changeStateTo(String state) {
         switch (state) {
             case START_STATE:
@@ -154,92 +221,46 @@ public class CircleDropMain extends AppCompatActivity {
                 mNewState = true;
                 break;
             default:
-                Log.d(LOG_TAG, "Need to select correct state");
                 break;
         }
     }
 
 
     //reset score and lives
-    //all white circles are removed, player can place white circles on screen by touching, longer
+    //all obstacle circles are removed, player can place obstacle circles on screen by touching,
+    // longer
     // the press the larger the circle
     private void newGame() {
         mCurrentScore = STARTING_SCORE;
         mCurrentLives = LIVES;
-        createPlayer();
+        updateCommandBar();
+        // remove view if end game was previously pressed
+        if (mEndGame) {
+            ((ViewManager)mGamePlayView.getParent()).removeView(mGamePlayView);
+        }
+        createGamePlayView();
 
     }
 
-    // all white circles start falling off the screen from top to bottom
-    // each time the white circle is avoided, its fall speed increases 25% and its point value
-    // increases by 1. This gets reset when the screen is cleared of white circles
-    @SuppressLint("ClickableViewAccessibility")
+    // all obstacle circles start falling off the screen from top to bottom
+    // each time the obstacle circle is avoided, its fall speed increases 25% and its point value
+    // increases by 1. This gets reset when the screen is cleared of obstacle circles
     private void startGame() {
-        mPlayerView.setVisibility(View.VISIBLE);
-
-        //start the animation for the white circles
-//        startAnimation(mPlayerView);
-        // display the black circle with onTouch listener to listen for player action
-        mGameView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                eventX = event.getX();
-
-                int pointerIndex = event.getActionIndex();
-                int pointerId = event.getPointerId(pointerIndex);
-                int maskedAction = event.getActionMasked();
-
-                if (mStartState) {
-                    switch (maskedAction) {
-                        case MotionEvent.ACTION_DOWN:
-                            mIsInMotion = true;
-                            movePlayerCircle(eventX);
-                            break;
-                        case MotionEvent.ACTION_POINTER_DOWN:
-                            mIsInMotion = false;
-                            break;
-                        case MotionEvent.ACTION_POINTER_UP:
-                            mIsInMotion = true;
-                            eventX = event.getX();
-                            movePlayerCircle(eventX);
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            //stop moving the circle
-                            mIsInMotion = false;
-                            Log.d(LOG_TAG, "ACTION UP");
-                            break;
-                    }
-                }
-                else if (mNewState) {
-                    switch (maskedAction) {
-                        case MotionEvent.ACTION_DOWN:
-                            // create white circle and increase its radius
-                            break;
-                        case MotionEvent.ACTION_MOVE:
-                            break;
-                        case MotionEvent.ACTION_UP:
-                            //
-                            break;
-                    }
-                }
-                mPlayerView.invalidate();
-                return true;
-            }
-        });
-
+        mGamePlayView.startAnimation();
+        //check for collision, use thread to get message each time a collision occurs
+        //keep track of points and lives by retrieving it periodically from GamePlayView?
     }
 
-    // white circles stop moving and player should not be able to move black circle
+    // obstacle circles stop moving and player should not be able to move black circle
     private void pauseGame() {
+        mGamePlayView.pauseAnimation();
         // should not allow player action besides command bar
     }
 
     // ends the game. Maybe display the score in center if have time
     private void endGame() {
-        // remove black circle
-        mPlayerView.setVisibility(View.INVISIBLE);
+        mGamePlayView.pauseAnimation();
+        mEndGame = true;
     }
 
 
@@ -280,35 +301,37 @@ public class CircleDropMain extends AppCompatActivity {
 
     // should move the player circle to the left if left side of screen is touched, and move
     // right if right side of screen is touched
-    private void movePlayerCircle(float eventX) {
-        if (eventX < (mScreenWidth / 2)) {
-            Log.d(LOG_TAG, "Start State, Action Down on left side");
-            if (mPlayerView.getX() >= 10) {
-                    mPlayerView.setX(mPlayerView.getX() - 10);
-                if (mIsInMotion) {
-                    mPlayerView.postDelayed(new Mover(), 20);
-                }
-            }
-        } else if (eventX >= mScreenWidth / 2) {
-            Log.d(LOG_TAG, "Start State, Action Down on right side");
-            if (mPlayerView.getX() + mPlayerView.getWidth() <= mScreenWidth-10) {
-                mPlayerView.setX(mPlayerView.getX() + 10);
-                if (mIsInMotion) {
-                    mPlayerView.postDelayed(new Mover(), 20);
-                }
-            }
-        }
-        else {
-            Log.d(LOG_TAG, "Start State, Action Down cannot move player circle");
-            mIsInMotion = false;
-        }
-    }
+//    private void movePlayerCircle(float eventX) {
+//        if (eventX < (mScreenWidth / 2)) {
+//            Log.d(LOG_TAG, "Start State, Action Down on left side");
+//            if (mPlayerView.getX() >= 10) {
+//                    mPlayerView.setX(mPlayerView.getX() - 10);
+//                if (mIsInMotion) {
+////                    mPlayerView.postDelayed(new Mover(), 20);
+//                    mPlayerView.post(new Mover());
+//                }
+//            }
+//        } else if (eventX >= mScreenWidth / 2) {
+//            Log.d(LOG_TAG, "Start State, Action Down on right side");
+//            if (mPlayerView.getX() + mPlayerView.getWidth() <= mScreenWidth-10) {
+//                mPlayerView.setX(mPlayerView.getX() + 10);
+//                if (mIsInMotion) {
+////                    mPlayerView.postDelayed(new Mover(), 20);
+//                    mPlayerView.post(new Mover());
+//                }
+//            }
+//        }
+//        else {
+//            Log.d(LOG_TAG, "Start State, Action Down cannot move player circle");
+//            mIsInMotion = false;
+//        }
+//    }
 
-    private boolean isInBounds(View widget) {
-        float x = widget.getX();
-        if (x >= 10 && (x + widget.getWidth() < mScreenWidth-10)) return true;
-        return false;
-    }
+//    private boolean isInBounds(View widget) {
+//        float x = widget.getX();
+//        if (x >= 10 && (x + widget.getWidth() < mScreenWidth-10)) return true;
+//        return false;
+//    }
 
     private void getScreenSize(){
         Display display = getWindowManager().getDefaultDisplay();
@@ -318,31 +341,51 @@ public class CircleDropMain extends AppCompatActivity {
         mScreenHeight = screenSize.y;
     }
 
-    private void createPlayer() {
-        mPlayerView = new LinearLayout(this);
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(PLAYER_W,PLAYER_H);
-        mPlayerView.setLayoutParams(layoutParams);
-        mPlayerView.setBackgroundResource(R.drawable.circle_shape);
-        mPlayerView.setX(mPlayerX);
-        mPlayerView.setY(mPlayerY);
-        mGameView.addView(mPlayerView);
-        mPlayerView.setVisibility(View.INVISIBLE);
+    private void createGamePlayView() {
+        mGamePlayView = new GamePlayView(this, mScreenWidth, mScreenHeight, mCurrentScore, mCurrentLives);
+        mGameView.addView(mGamePlayView);
     }
 
-    private void startAnimation(View view) {
-        float start = view.getTop();
-        float end = mGameView.getHeight();
+    private Circle createWhiteCircle(float eventX, float eventY) {
+        Log.d(LOG_TAG, "createWhiteCircle() called");
+        return mGamePlayView.createObstacleCircle(eventX, eventY);
+    }
 
-        ObjectAnimator circleAnimator = ObjectAnimator.ofFloat(view, "y", start, end);
-        circleAnimator.setInterpolator(new AccelerateInterpolator());
-        circleAnimator.setDuration(3000);
-        circleAnimator.start();
+    private void increaseRadius(Circle circle) {
+        if (circle != null) {
+            mGamePlayView.increaseRadius(circle);
+            if (mIsFingerDown) {
+                mGamePlayView.post(new Enlarger());
+            }
+        }
+        else if (circle == null){
+            Toast.makeText(getApplicationContext(), R.string.circle_limit_string, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void movePlayerCircle(float eventX) {
+        Log.d(LOG_TAG, "movePlayerCircle() called");
+        mGamePlayView.movePlayerCircle(eventX);
+        if (mIsInMotion) {
+            mGamePlayView.post(new Mover());
+        }
     }
 
     class Mover implements Runnable {
         @Override
         public void run() {
-            movePlayerCircle(eventX);
+            movePlayerCircle(mEventX);
         }
     }
+
+    class Enlarger implements Runnable {
+        @Override
+        public void run() {
+            increaseRadius(mObstacleCircle);
+        }
+    }
+
+
+
+
 }

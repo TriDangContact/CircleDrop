@@ -1,32 +1,45 @@
 package com.android.circledrop;
 
+import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.PointF;
 
 public class Circle {
     private float mX;
     private float mY;
-    private float mCenterX;
-    private float mCenterY;
     private int mRadius;
     private int mPoints;
+    private Paint mPaint;
+    private double mSpeed;
+    private boolean mCollision;
 
-    public Circle(float x, float y, int radius, float centerX, float centerY) {
+    public Circle(float x, float y, int radius, Paint paint) {
         mX = x;
         mY = y;
         mRadius = radius;
-        mCenterX = centerX;
-        mCenterY = centerY;
+        mPoints = 1;
+        mPaint = paint;
+        mSpeed = 200;
+        mCollision = false;
+    }
+    public Circle(float x, float y, int radius) {
+        mX = x;
+        mY = y;
+        mRadius = radius;
     }
 
-    public Circle(float x, float y, int radius, float centerX, float centerY, boolean points) {
+    public Circle(float x, float y, int radius, boolean points, Paint paint) {
         mX = x;
         mY = y;
         mRadius = radius;
-        mCenterX = centerX;
-        mCenterY = centerY;
+        mPaint = paint;
         if (points) {
             mPoints = 1;
         }
+    }
+
+    public void drawOn(Canvas canvas) {
+        canvas.drawCircle(mX, mY, mRadius, mPaint);
     }
 
     public float getX() {
@@ -41,24 +54,12 @@ public class Circle {
         return mY;
     }
 
-    public void setY(float y) {
-        mY = y;
-    }
+    public void setY(float y) { mY = y; }
 
-    public float getCenterX() {
-        return mCenterX;
-    }
-
-    public void setCenterX(float centerX) {
-        mCenterX = centerX;
-    }
+    public float getCenterX() { return getX()+getRadius(); }
 
     public float getCenterY() {
-        return mCenterY;
-    }
-
-    public void setCenterY(float centerY) {
-        mCenterY = centerY;
+        return getY()+getRadius();
     }
 
     public int getRadius() {
@@ -76,4 +77,25 @@ public class Circle {
     public void setPoints(int points) {
         mPoints = points;
     }
+
+    public Paint getPaint() { return mPaint; }
+
+    public void setPaint(Paint paint) { mPaint = paint; }
+
+    public int getWidth() { return mRadius*2; }
+
+    public int getHeight() { return mRadius*2; }
+
+    public double getSpeed() { return mSpeed; }
+
+    public void setSpeed(double speed) { mSpeed = speed; }
+
+    public boolean isCollision() { return mCollision; }
+
+    public void setCollision(boolean collision) { mCollision = collision; }
+
+    public String toString() {
+        return "X= " +mX+ ", Y= " +mY+ ", radius= " +mRadius;
+    }
+
 }
