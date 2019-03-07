@@ -3,6 +3,7 @@ package com.android.circledrop;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Point;
+import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,14 +17,15 @@ import android.view.ViewManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class CircleDropMain extends AppCompatActivity {
+    public class CircleDropMain extends AppCompatActivity {
 
-    private final static String LOG_TAG = "CircleDropMain";
-    private final static int LIVES = 3;
+        private final static String LOG_TAG = "CircleDropMain";
+        private final static int LIVES = 3;
     private final static int STARTING_SCORE = 0;
     private final static String START_STATE = "startstate";
     private final static String PAUSE_STATE = "pausestate";
@@ -31,6 +33,7 @@ public class CircleDropMain extends AppCompatActivity {
     private final static String NEW_STATE = "newstate";
 
     private RelativeLayout mGameView;
+    private LinearLayout mCommandBarView;
     private Button mLeftButton;
     private Button mRightButton;
     private TextView mScoreView;
@@ -62,6 +65,7 @@ public class CircleDropMain extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         mGameView = (RelativeLayout) findViewById(R.id.gameView);
+        mCommandBarView = (LinearLayout) findViewById(R.id.commandBarView);
         mLeftButton = (Button) findViewById(R.id.leftButton);
         mRightButton = (Button) findViewById(R.id.rightButton);
         mScoreView = (TextView) findViewById(R.id.scoreView);
@@ -69,20 +73,19 @@ public class CircleDropMain extends AppCompatActivity {
 
         getScreenSize();
 
+        // first time a game is run, everything must be set manually
         changeStateTo(NEW_STATE);
         newGame();
         updateCommandBar();
 
-        // when Pause is pressed, game is paused and text changes to Resume
-        // when Resume is pressed, game is resumed and text changes to Pause
         mLeftButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mNewState) {
-                    // pause the game, but don't put it into Pause state; might need to have
-                    // another state for when the game is paused while in New State
+                    changeStateTo(PAUSE_STATE);
+                    pauseGame();
+                    updateCommandBar();
                 }
-                //set the game to pause and text changes to Resume
                 else if (mStartState) {
                     changeStateTo(PAUSE_STATE);
                     pauseGame();
@@ -97,12 +100,6 @@ public class CircleDropMain extends AppCompatActivity {
             }
         });
 
-        // when End is pressed, game ends and text changes to New
-        // when New is pressed, score sets to zero, lives to 3, left button is Pause, and text
-        // changes to Start
-        // at this point, player can place obstacle circles on screen by touching screen, the longer
-        // the touch, the larger the circle
-        // when Start is pressed, obstacle circles start falling, text changes to End
         mRightButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -137,6 +134,8 @@ public class CircleDropMain extends AppCompatActivity {
                 int pointerId = event.getPointerId(pointerIndex);
                 int maskedAction = event.getActionMasked();
 
+                // should move the player circle left and right on one finger press, but stops it
+                // if another finger is pressed
                 if (mStartState) {
                     switch (maskedAction) {
                         case MotionEvent.ACTION_DOWN:
@@ -161,13 +160,13 @@ public class CircleDropMain extends AppCompatActivity {
                             break;
                     }
                 }
+                // create obstacle circle and increase its radius on finger down
                 else if (mNewState) {
                     switch (maskedAction) {
                         case MotionEvent.ACTION_DOWN:
-                            // create obstacle circle and increase its radius
                             Log.d(LOG_TAG, "NewState ACTION DOWN");
                             mIsFingerDown = true;
-                            mObstacleCircle = createWhiteCircle(mEventX, mEventY);
+                            mObstacleCircle = createObstacleCircle(mEventX, mEventY);
                             increaseRadius(mObstacleCircle);
                             return true;
                         case MotionEvent.ACTION_MOVE:
@@ -176,11 +175,25 @@ public class CircleDropMain extends AppCompatActivity {
                             // stop increasing the radius of the obstacle circle
                             Log.d(LOG_TAG, "NewState ACTION UP");
                             mIsFingerDown = false;
-
                             break;
                     }
                 }
             return false;
+            }
+        });
+
+        // allows the GamePlayView to send the live score to Activity each time it changes
+        mGamePlayView.setMessageSentListener(new GamePlayView.MessageSentListener() {
+            @Override
+            public void onMessageSent() {
+                Log.d(LOG_TAG, "///////RECEIVED MESSAGE");
+                mCurrentScore = mGamePlayView.getScore();
+                mCurrentLives = mGamePlayView.getLives();
+                if (mCurrentLives <= 0) {
+                    changeStateTo(END_STATE);
+                    endGame();
+                }
+                updateCommandBar();
             }
         });
     }
@@ -225,7 +238,6 @@ public class CircleDropMain extends AppCompatActivity {
         }
     }
 
-
     //reset score and lives
     //all obstacle circles are removed, player can place obstacle circles on screen by touching,
     // longer
@@ -238,6 +250,7 @@ public class CircleDropMain extends AppCompatActivity {
         if (mEndGame) {
             ((ViewManager)mGamePlayView.getParent()).removeView(mGamePlayView);
         }
+        //create an instance of the game and add it to the Activity
         createGamePlayView();
 
     }
@@ -249,6 +262,9 @@ public class CircleDropMain extends AppCompatActivity {
         mGamePlayView.startAnimation();
         //check for collision, use thread to get message each time a collision occurs
         //keep track of points and lives by retrieving it periodically from GamePlayView?
+//        if (mLiveScore) {
+//            mCommandBarView.post(new LiveScore());
+//        }
     }
 
     // obstacle circles stop moving and player should not be able to move black circle
@@ -261,6 +277,7 @@ public class CircleDropMain extends AppCompatActivity {
     private void endGame() {
         mGamePlayView.pauseAnimation();
         mEndGame = true;
+        updateCommandBar();
     }
 
 
@@ -299,39 +316,35 @@ public class CircleDropMain extends AppCompatActivity {
         mLivesView.setText(String.valueOf(mCurrentLives));
     }
 
+    /*
     // should move the player circle to the left if left side of screen is touched, and move
     // right if right side of screen is touched
-//    private void movePlayerCircle(float eventX) {
-//        if (eventX < (mScreenWidth / 2)) {
-//            Log.d(LOG_TAG, "Start State, Action Down on left side");
-//            if (mPlayerView.getX() >= 10) {
-//                    mPlayerView.setX(mPlayerView.getX() - 10);
-//                if (mIsInMotion) {
-////                    mPlayerView.postDelayed(new Mover(), 20);
-//                    mPlayerView.post(new Mover());
-//                }
-//            }
-//        } else if (eventX >= mScreenWidth / 2) {
-//            Log.d(LOG_TAG, "Start State, Action Down on right side");
-//            if (mPlayerView.getX() + mPlayerView.getWidth() <= mScreenWidth-10) {
-//                mPlayerView.setX(mPlayerView.getX() + 10);
-//                if (mIsInMotion) {
-////                    mPlayerView.postDelayed(new Mover(), 20);
-//                    mPlayerView.post(new Mover());
-//                }
-//            }
-//        }
-//        else {
-//            Log.d(LOG_TAG, "Start State, Action Down cannot move player circle");
-//            mIsInMotion = false;
-//        }
-//    }
-
-//    private boolean isInBounds(View widget) {
-//        float x = widget.getX();
-//        if (x >= 10 && (x + widget.getWidth() < mScreenWidth-10)) return true;
-//        return false;
-//    }
+    private void movePlayerCircle(float eventX) {
+        if (eventX < (mScreenWidth / 2)) {
+            Log.d(LOG_TAG, "Start State, Action Down on left side");
+            if (mPlayerView.getX() >= 10) {
+                    mPlayerView.setX(mPlayerView.getX() - 10);
+                if (mIsInMotion) {
+//                    mPlayerView.postDelayed(new Mover(), 20);
+                    mPlayerView.post(new Mover());
+                }
+            }
+        } else if (eventX >= mScreenWidth / 2) {
+            Log.d(LOG_TAG, "Start State, Action Down on right side");
+            if (mPlayerView.getX() + mPlayerView.getWidth() <= mScreenWidth-10) {
+                mPlayerView.setX(mPlayerView.getX() + 10);
+                if (mIsInMotion) {
+//                    mPlayerView.postDelayed(new Mover(), 20);
+                    mPlayerView.post(new Mover());
+                }
+            }
+        }
+        else {
+            Log.d(LOG_TAG, "Start State, Action Down cannot move player circle");
+            mIsInMotion = false;
+        }
+    }
+    */
 
     private void getScreenSize(){
         Display display = getWindowManager().getDefaultDisplay();
@@ -346,7 +359,7 @@ public class CircleDropMain extends AppCompatActivity {
         mGameView.addView(mGamePlayView);
     }
 
-    private Circle createWhiteCircle(float eventX, float eventY) {
+    private Circle createObstacleCircle(float eventX, float eventY) {
         Log.d(LOG_TAG, "createWhiteCircle() called");
         return mGamePlayView.createObstacleCircle(eventX, eventY);
     }
@@ -384,8 +397,5 @@ public class CircleDropMain extends AppCompatActivity {
             increaseRadius(mObstacleCircle);
         }
     }
-
-
-
 
 }

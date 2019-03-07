@@ -2,65 +2,51 @@ package com.android.circledrop;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PointF;
 
 public class Circle {
     private float mX;
     private float mY;
+    private float mCenterX;
+    private float mCenterY;
     private int mRadius;
     private int mPoints;
     private Paint mPaint;
     private double mSpeed;
     private boolean mCollision;
+    private boolean mMessageSent;
 
-    public Circle(float x, float y, int radius, Paint paint) {
-        mX = x;
-        mY = y;
+    public Circle(float centerX, float centerY, int radius, Paint paint) {
+        mCenterX = centerX;
+        mCenterY = centerY;
         mRadius = radius;
         mPoints = 1;
         mPaint = paint;
-        mSpeed = 200;
+        mSpeed = 200;           //anything above 150 is good starting speed
         mCollision = false;
-    }
-    public Circle(float x, float y, int radius) {
-        mX = x;
-        mY = y;
-        mRadius = radius;
-    }
-
-    public Circle(float x, float y, int radius, boolean points, Paint paint) {
-        mX = x;
-        mY = y;
-        mRadius = radius;
-        mPaint = paint;
-        if (points) {
-            mPoints = 1;
-        }
+        mMessageSent = false;
     }
 
     public void drawOn(Canvas canvas) {
-        canvas.drawCircle(mX, mY, mRadius, mPaint);
+        canvas.drawCircle(this.getCenterX(), this.getCenterY(), mRadius, mPaint);
     }
 
     public float getX() {
-        return mX;
-    }
-
-    public void setX(float x) {
-        mX = x;
+        return mCenterX - mRadius;
     }
 
     public float getY() {
-        return mY;
+        return mCenterY - mRadius;
     }
 
-    public void setY(float y) { mY = y; }
+    public float getCenterX() { return mCenterX; }
 
-    public float getCenterX() { return getX()+getRadius(); }
+    public void setCenterX(float x) { mCenterX = x; }
 
     public float getCenterY() {
-        return getY()+getRadius();
+        return mCenterY;
     }
+
+    public void setCenterY(float y) { mCenterY = y; }
 
     public int getRadius() {
         return mRadius;
@@ -90,12 +76,19 @@ public class Circle {
 
     public void setSpeed(double speed) { mSpeed = speed; }
 
-    public boolean isCollision() { return mCollision; }
 
     public void setCollision(boolean collision) { mCollision = collision; }
 
+    public boolean getCollision() { return mCollision; }
+
+    public boolean isMessageSent() { return mMessageSent; }
+
+    public void setMessageSent(boolean messageSent) { mMessageSent = messageSent; }
+
     public String toString() {
-        return "X= " +mX+ ", Y= " +mY+ ", radius= " +mRadius;
+        return "centerX= " +
+                "=" +mCenterX+ ", centerY= " +mCenterY+", X= " +mX+ ", Y= " +mY+ ", " +
+                "radius= " +mRadius+ ", height= " +this.getHeight();
     }
 
 }
