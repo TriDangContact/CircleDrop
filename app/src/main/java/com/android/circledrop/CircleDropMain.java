@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Point;
 import android.os.AsyncTask;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -181,21 +182,6 @@ import android.widget.Toast;
             return false;
             }
         });
-
-        // allows the GamePlayView to send the live score to Activity each time it changes
-        mGamePlayView.setMessageSentListener(new GamePlayView.MessageSentListener() {
-            @Override
-            public void onMessageSent() {
-                Log.d(LOG_TAG, "///////RECEIVED MESSAGE");
-                mCurrentScore = mGamePlayView.getScore();
-                mCurrentLives = mGamePlayView.getLives();
-                if (mCurrentLives <= 0) {
-                    changeStateTo(END_STATE);
-                    endGame();
-                }
-                updateCommandBar();
-            }
-        });
     }
 
     @Override
@@ -252,7 +238,7 @@ import android.widget.Toast;
         }
         //create an instance of the game and add it to the Activity
         createGamePlayView();
-
+        getLiveScore();
     }
 
     // all obstacle circles start falling off the screen from top to bottom
@@ -316,36 +302,6 @@ import android.widget.Toast;
         mLivesView.setText(String.valueOf(mCurrentLives));
     }
 
-    /*
-    // should move the player circle to the left if left side of screen is touched, and move
-    // right if right side of screen is touched
-    private void movePlayerCircle(float eventX) {
-        if (eventX < (mScreenWidth / 2)) {
-            Log.d(LOG_TAG, "Start State, Action Down on left side");
-            if (mPlayerView.getX() >= 10) {
-                    mPlayerView.setX(mPlayerView.getX() - 10);
-                if (mIsInMotion) {
-//                    mPlayerView.postDelayed(new Mover(), 20);
-                    mPlayerView.post(new Mover());
-                }
-            }
-        } else if (eventX >= mScreenWidth / 2) {
-            Log.d(LOG_TAG, "Start State, Action Down on right side");
-            if (mPlayerView.getX() + mPlayerView.getWidth() <= mScreenWidth-10) {
-                mPlayerView.setX(mPlayerView.getX() + 10);
-                if (mIsInMotion) {
-//                    mPlayerView.postDelayed(new Mover(), 20);
-                    mPlayerView.post(new Mover());
-                }
-            }
-        }
-        else {
-            Log.d(LOG_TAG, "Start State, Action Down cannot move player circle");
-            mIsInMotion = false;
-        }
-    }
-    */
-
     private void getScreenSize(){
         Display display = getWindowManager().getDefaultDisplay();
         Point screenSize = new Point();
@@ -384,6 +340,17 @@ import android.widget.Toast;
         }
     }
 
+    private void getLiveScore() {
+        Log.d(LOG_TAG, "getLiveScore() called");
+        mCurrentScore = mGamePlayView.getScore();
+        mCurrentLives = mGamePlayView.getLives();
+        showScoreLives();
+        if (mCurrentLives <= 0) {
+            endGame();
+        }
+        mGamePlayView.post(new LiveScore());
+    }
+
     class Mover implements Runnable {
         @Override
         public void run() {
@@ -395,6 +362,13 @@ import android.widget.Toast;
         @Override
         public void run() {
             increaseRadius(mObstacleCircle);
+        }
+    }
+
+    class LiveScore implements Runnable {
+        @Override
+        public void run() {
+            getLiveScore();
         }
     }
 

@@ -29,9 +29,7 @@ public class GamePlayView extends View {
 
     private Paint mPaint;
     private Circle mPlayerCircle;
-    private MessageSentListener mMessageSentListener;
     private TimeAnimator mTimeAnimator;
-    private long mCurrentPlayTime;
 
     private int mRadius;
     private int mScreenWidth;
@@ -47,18 +45,12 @@ public class GamePlayView extends View {
         mScreenHeight = height;
         mScore = score;
         mLives = lives;
-        this.mMessageSentListener = null;
         init();
-        Log.d(LOG_TAG, "GamePlayview constructor1 called");
     }
 
     public GamePlayView(Context context, AttributeSet attr) {
         super(context, attr);
         init();
-    }
-
-    public interface MessageSentListener {
-        void onMessageSent();
     }
 
     private void init() {
@@ -69,15 +61,12 @@ public class GamePlayView extends View {
     }
 
     private void createPlayer() {
-        Log.d(LOG_TAG, "createPlayer() called");
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(Color.BLACK);
-        Log.d(LOG_TAG, "width= " +mScreenWidth+ ", height= " +mScreenHeight);
         int startX = (mScreenWidth/2);
         int startY = (mScreenHeight)/20 * 15;
         mPlayerCircle = new Circle(startX, startY, mRadius, mPaint);
-        Log.d(LOG_TAG, mPlayerCircle.toString());
     }
 
     //needs to be able to dynamically get the current X/Y and add to it to change the position of
@@ -91,25 +80,15 @@ public class GamePlayView extends View {
                             " " +
                             "centerY= "+each.getCenterY()+ ", radius= " +each.getRadius()+ ", " +
                             "points= " +each.getPoints()+ " COLLISION= " +each.getCollision()+ " " +
-                            "MESSAGE SENT= " +each.isMessageSent());
+                            "MESSAGE SENT= " +each.isLiveScoreUpdated());
             each.drawOn(canvas);
         }
         canvas.drawCircle(mPlayerCircle.getCenterX(), mPlayerCircle.getCenterY(),
-                mPlayerCircle.getRadius(),
-                mPlayerCircle.getPaint());
+                mPlayerCircle.getRadius(), mPlayerCircle.getPaint());
     }
 
-
-    // gets called when finger is down
-    public Circle createObstacleCircle(float eventX, float eventY) {
-        if (mMessageSentListener == null) {
-            mMessageSentListener = new MessageSentListener() {
-                @Override
-                public void onMessageSent() {
-                    Log.d(LOG_TAG, "/////INSTANTIATED MESSAGE LISTENER");
-                }
-            };
-        }
+    // gets called when finger is down in newgame state
+    public Circle createObstacleCircle(float eventX, float eventY) { ;
         if (mCircleArrayList.size() < WHITE_CIRCLE_LIMIT) {
             Log.d(LOG_TAG, "createCircle() called");
             Paint paint = new Paint();
@@ -123,7 +102,7 @@ public class GamePlayView extends View {
         return null;
     }
 
-    //takes a circle object and increase its radius
+    // called by the main activity during newgame state
     public void increaseRadius(Circle circle) {
         Log.d(LOG_TAG, "increaseRadius() called");
         for (Circle each : mCircleArrayList) {
@@ -136,23 +115,24 @@ public class GamePlayView extends View {
         invalidate();
     }
 
-    // called by main method during startgame state
+    // called by main activity during startgame state
     public void movePlayerCircle(float eventX) {
         if (eventX < (mScreenWidth / 2)) {
             Log.d(LOG_TAG, "Start State, Action Down on left side");
-            if (mPlayerCircle.getX() >= mPlayerCircle.getWidth()) {
+            if (mPlayerCircle.getX() >= 10) {
                 mPlayerCircle.setCenterX(mPlayerCircle.getCenterX() - PLAYER_MOVEMENT_SPEED);
 
             }
         } else if (eventX >= mScreenWidth / 2) {
             Log.d(LOG_TAG, "Start State, Action Down on right side");
-            if (mPlayerCircle.getX() + mPlayerCircle.getWidth() <= mScreenWidth) {
+            if (mPlayerCircle.getX() + mPlayerCircle.getWidth() <= mScreenWidth - 10) {
                 mPlayerCircle.setCenterX(mPlayerCircle.getCenterX() + PLAYER_MOVEMENT_SPEED);
             }
         }
         invalidate();
     }
 
+    // called by main activity during startgame state
     public void startAnimation() {
         mTimeAnimator = new TimeAnimator();
         mTimeAnimator.setTimeListener(new TimeAnimator.TimeListener() {
@@ -172,6 +152,7 @@ public class GamePlayView extends View {
         for (final Circle circle : mCircleArrayList) {
             // Move the circle based on the elapsed time and it's speed
             float change = (float) circle.getSpeed() * deltaSeconds;
+            // limit the circle velocity to make game more playable
             if (change < MAX_OBSTACLE_SPEED) {
                 Log.d(LOG_TAG, "change= " + change);
                 circle.setCenterY(circle.getCenterY() + change);
@@ -179,68 +160,38 @@ public class GamePlayView extends View {
             else {
                 circle.setCenterY(circle.getCenterY() + MAX_OBSTACLE_SPEED);
             }
+
             // this is where we detect collision, since the object's position have been
             // updated to their current position
             calculateCollision(circle);
 
+            // we need to make sure that live and score is only updated once per traversal
             if (circle.getCollision() == true) {
-                if (circle.isMessageSent() == false) {
+                if (circle.isLiveScoreUpdated() == false) {
                     Log.d(LOG_TAG, "/////SENDING MESSAGE");
                     mLives--;
-                    Log.d(LOG_TAG, "/////LIVES= " +mLives);
-                    if (mMessageSentListener != null) {
-                        mMessageSentListener.onMessageSent();
-                        Log.d(LOG_TAG, "/////MESSAGE SENT");
-                        circle.setMessageSent(true);
-                    }
-                    else {
-                        Log.d(LOG_TAG, "/////ERROR: MessageSentListener is NULL");
-                    }
+                    circle.setLiveScoreUpdated(true);
                 }
                 else {
                     Log.d(LOG_TAG, "/////MESSAGE SENT IS TRUE");
                 }
             }
-            // immediately after the obstacle has entirely passed the player, update the live
-            // score and send the message to Activity. Then we immediately close the door to
-            // prevent any more message for the current traversal since we only need the score to
-            // be sent once per traversal.
+
+            // we define the threshold as the point immediately after the player, and the point
+            // immediately before the next position the obstacle will move to, therefore, only
+            // allowing the obstacle a single chance to update the score.
             float currentY = circle.getY();
             float currentThreshold = mPlayerCircle.getY() + (mPlayerCircle.getRadius()*2);
             float nextThreshold = currentThreshold + change;
             if (currentY > currentThreshold && currentY < nextThreshold) {
                 if (circle.getCollision() == false) {
-                    Log.d(LOG_TAG, "/////SENDING MESSAGE AFTER THRESHOLD");
-                    Log.d(LOG_TAG,
-                            "CurrentY= " +currentY+ " currentThreshold= " +currentThreshold+ " " +
-                                    " nextThreshold= " +nextThreshold);
-                    Log.d(LOG_TAG, "/////PLAYER CIRCLE "+mPlayerCircle.toString());
-                    Log.d(LOG_TAG, "///OBSTACLE CIRCLE " +circle.toString());
                     mScore += circle.getPoints();
-                    Log.d(LOG_TAG, "This circle have not collided, SCORE = " +mScore);
-                    if (mMessageSentListener != null) {
-                        mMessageSentListener.onMessageSent();
-                        Log.d(LOG_TAG, "/////MESSAGE SENT AFTER THRESHOLD");
-                        circle.setMessageSent(true);
-                    }
-                    else {
-                        Log.d(LOG_TAG, "/////ERROR: MessageSentListener is NULL AFTER THRESHOLD");
-                    }
+                    circle.setLiveScoreUpdated(true);
                 }
             }
-
-            // If the obstacle is completely outside of the view bounds after
-            // updating it's position, recycle it.
+            // If the obstacle is completely outside of the view bounds (completed a
+            // traversal) after updating it's position, recycle it.
             if (circle.getY() > mScreenHeight) {
-                // if circle detects collision, send a message to Activity
-                Log.d(LOG_TAG, "Circle traveled outside of screen");
-//                if (circle.getCollision() == false) {
-//                    mScore += circle.getPoints();
-//                    Log.d(LOG_TAG, "This circle have not collided, SCORE = " +mScore);
-//                }
-//                if (mMessageSentListener != null) {
-//                    mMessageSentListener.onMessageSent();
-//                }
                 initializeCircle(circle);
             }
         }
@@ -251,14 +202,12 @@ public class GamePlayView extends View {
         circle.setPoints(circle.getPoints()+POINTS_INCREASE);
         circle.setCenterY(getTop()-(circle.getWidth()/2));
         circle.setCollision(false);
-        circle.setMessageSent(false);
+        circle.setLiveScoreUpdated(false);
         circle.setSpeed(speed);
     }
 
     public void pauseAnimation() {
         if (mTimeAnimator != null && mTimeAnimator.isRunning()) {
-            // Store the current play time for later.
-            mCurrentPlayTime = mTimeAnimator.getCurrentPlayTime();
             mTimeAnimator.pause();
         }
     }
@@ -291,10 +240,6 @@ public class GamePlayView extends View {
 
     public int getLives() {
         return mLives;
-    }
-
-    public void setMessageSentListener(MessageSentListener listener) {
-        this.mMessageSentListener = listener;
     }
 
 }

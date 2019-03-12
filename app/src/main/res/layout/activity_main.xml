@@ -2,8 +2,10 @@
 <android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:splitMotionEvents = "false"
     tools:context=".CircleDropMain">
 
     <RelativeLayout
@@ -26,7 +28,7 @@
         android:background="@drawable/command_bar_border"
         android:gravity="center"
         android:orientation="horizontal"
-        android:padding="10dp"
+        android:padding="5dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +37,8 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:gravity="center"
+            android:layout_weight="1">
 
             <TextView
                 android:layout_width="wrap_content"
@@ -48,7 +51,7 @@
                 android:id="@+id/scoreView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_margin="5dp"
+                android:layout_marginRight="5dp"
                 android:textColor="@color/colorBlack"
                 tools:text="0" />
         </LinearLayout>
@@ -56,8 +59,8 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="20dp"
-            android:gravity="center">
+            android:gravity="center"
+            android:layout_weight="1">
 
             <Button
                 android:id="@+id/leftButton"
@@ -79,7 +82,8 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center">
+            android:gravity="center"
+            android:layout_weight="1">
 
             <TextView
                 android:layout_width="wrap_content"

@@ -13,7 +13,7 @@ public class Circle {
     private Paint mPaint;
     private double mSpeed;
     private boolean mCollision;
-    private boolean mMessageSent;
+    private boolean mLiveScoreUpdated;
 
     public Circle(float centerX, float centerY, int radius, Paint paint) {
         mCenterX = centerX;
@@ -23,7 +23,7 @@ public class Circle {
         mPaint = paint;
         mSpeed = 200;           //anything above 150 is good starting speed
         mCollision = false;
-        mMessageSent = false;
+        mLiveScoreUpdated = false;
     }
 
     public void drawOn(Canvas canvas) {
@@ -81,9 +81,9 @@ public class Circle {
 
     public boolean getCollision() { return mCollision; }
 
-    public boolean isMessageSent() { return mMessageSent; }
+    public boolean isLiveScoreUpdated() { return mLiveScoreUpdated; }
 
-    public void setMessageSent(boolean messageSent) { mMessageSent = messageSent; }
+    public void setLiveScoreUpdated(boolean liveScoreUpdated) { mLiveScoreUpdated = liveScoreUpdated; }
 
     public String toString() {
         return "centerX= " +
