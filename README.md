@@ -9,4 +9,4 @@ This is an Android Mobile Game that allows a user to create obstacles that will 
 - Target API 24
 
 # Demo
-![alt text]
+![alt text](https://github.com/TriDangContact/CircleDrop/blob/master/assets/CircleDrop%20Demo.gif)
