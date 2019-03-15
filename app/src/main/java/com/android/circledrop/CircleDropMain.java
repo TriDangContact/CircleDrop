@@ -1,32 +1,23 @@
 package com.android.circledrop;
 
-import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Point;
-import android.os.AsyncTask;
-import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
-import android.view.GestureDetector;
-import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.AccelerateInterpolator;
 import android.widget.Button;
-import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
     public class CircleDropMain extends AppCompatActivity {
 
-        private final static String LOG_TAG = "CircleDropMain";
-        private final static int LIVES = 3;
+    private final static String LOG_TAG = "CircleDropMain";
+    private final static int LIVES = 3;
     private final static int STARTING_SCORE = 0;
     private final static String START_STATE = "startstate";
     private final static String PAUSE_STATE = "pausestate";
@@ -34,7 +25,6 @@ import android.widget.Toast;
     private final static String NEW_STATE = "newstate";
 
     private RelativeLayout mGameView;
-    private LinearLayout mCommandBarView;
     private Button mLeftButton;
     private Button mRightButton;
     private TextView mScoreView;
@@ -55,9 +45,7 @@ import android.widget.Toast;
     private float mEventX;
     private float mEventY;
 
-
     private GamePlayView mGamePlayView;
-
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -66,7 +54,6 @@ import android.widget.Toast;
         setContentView(R.layout.activity_main);
 
         mGameView = (RelativeLayout) findViewById(R.id.gameView);
-        mCommandBarView = (LinearLayout) findViewById(R.id.commandBarView);
         mLeftButton = (Button) findViewById(R.id.leftButton);
         mRightButton = (Button) findViewById(R.id.rightButton);
         mScoreView = (TextView) findViewById(R.id.scoreView);
@@ -225,9 +212,8 @@ import android.widget.Toast;
     }
 
     //reset score and lives
-    //all obstacle circles are removed, player can place obstacle circles on screen by touching,
-    // longer
-    // the press the larger the circle
+    // all obstacle circles are removed, player can place obstacle circles on screen by touching,
+    // longer the press the larger the circle
     private void newGame() {
         mCurrentScore = STARTING_SCORE;
         mCurrentLives = LIVES;
@@ -246,11 +232,6 @@ import android.widget.Toast;
     // increases by 1. This gets reset when the screen is cleared of obstacle circles
     private void startGame() {
         mGamePlayView.startAnimation();
-        //check for collision, use thread to get message each time a collision occurs
-        //keep track of points and lives by retrieving it periodically from GamePlayView?
-//        if (mLiveScore) {
-//            mCommandBarView.post(new LiveScore());
-//        }
     }
 
     // obstacle circles stop moving and player should not be able to move black circle
@@ -266,12 +247,9 @@ import android.widget.Toast;
         updateCommandBar();
     }
 
-
     private void updateCommandBar() {
         updateButtons();
         showScoreLives();
-        Log.d(LOG_TAG, "Current State: New= "+mNewState+ ", Start= " +mStartState+ ", " +
-                "Pause= " + mPauseState +", End= " +mEndState);
     }
 
     private void updateButtons() {
@@ -371,5 +349,4 @@ import android.widget.Toast;
             getLiveScore();
         }
     }
-
 }

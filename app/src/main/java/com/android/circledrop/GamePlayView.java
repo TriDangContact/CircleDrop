@@ -1,29 +1,25 @@
 package com.android.circledrop;
 
-import android.animation.ObjectAnimator;
 import android.animation.TimeAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.PorterDuff;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
 
 import java.util.ArrayList;
 
 public class GamePlayView extends View {
     private final static String LOG_TAG = "GamePlayView";
-    private final static int WHITE_CIRCLE_LIMIT = 5;    //better to have lower number
+    private final static int WHITE_CIRCLE_LIMIT = 10;    //better to have lower number
     private final static int DEFAULT_RADIUS = 40;       //40 is good
     private final static double SPEED_MULTIPLIER = 1.25;    //25% is good
     private final static float MAX_OBSTACLE_SPEED = 50; //50 is good
     private final static int MAX_OBSTACLE_SIZE = 2;     //screenwidth divided by this number
-    private final static int INCREASE_RADIUS_SIZE = 10; //10 is good
+    private final static int INCREASE_RADIUS_SIZE = 1; //should it keep between 1-10
     private final static int POINTS_INCREASE = 1;
     private final static int PLAYER_MOVEMENT_SPEED = 10;    //10 is good
 

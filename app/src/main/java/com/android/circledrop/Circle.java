@@ -4,8 +4,6 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 
 public class Circle {
-    private float mX;
-    private float mY;
     private float mCenterX;
     private float mCenterY;
     private int mRadius;
@@ -76,7 +74,6 @@ public class Circle {
 
     public void setSpeed(double speed) { mSpeed = speed; }
 
-
     public void setCollision(boolean collision) { mCollision = collision; }
 
     public boolean getCollision() { return mCollision; }
@@ -87,7 +84,8 @@ public class Circle {
 
     public String toString() {
         return "centerX= " +
-                "=" +mCenterX+ ", centerY= " +mCenterY+", X= " +mX+ ", Y= " +mY+ ", " +
+                "=" +mCenterX+ ", centerY= " +mCenterY+", X= " +this.getX()+ ", Y= " +this.getY()+
+                ", " +
                 "radius= " +mRadius+ ", height= " +this.getHeight();
     }
 
