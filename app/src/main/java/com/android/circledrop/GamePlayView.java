@@ -14,14 +14,15 @@ import java.util.ArrayList;
 
 public class GamePlayView extends View {
     private final static String LOG_TAG = "GamePlayView";
-    private final static int WHITE_CIRCLE_LIMIT = 10;    //better to have lower number
-    private final static int DEFAULT_RADIUS = 40;       //40 is good
-    private final static double SPEED_MULTIPLIER = 1.25;    //25% is good
-    private final static float MAX_OBSTACLE_SPEED = 50; //50 is good
-    private final static int MAX_OBSTACLE_SIZE = 2;     //screenwidth divided by this number
-    private final static int INCREASE_RADIUS_SIZE = 1; //should it keep between 1-10
-    private final static int POINTS_INCREASE = 1;
-    private final static int PLAYER_MOVEMENT_SPEED = 10;    //10 is good
+    private final static int WHITE_CIRCLE_LIMIT = 10;       //default=10, better to have low limit
+    private final static int DEFAULT_PLAYER_RADIUS = 40;    //default=40, 20-50 is good
+    private final static int DEFAULT_RADIUS = 10;           //default=10, 10-40 is good
+    private final static double SPEED_MULTIPLIER = 1.25;    //default=1.25, +25% change is good
+    private final static float MAX_OBSTACLE_SPEED = 50;     //default=50, below 100 is good
+    private final static int MAX_OBSTACLE_SIZE = 2;         //default=2, screenwidth div by this
+    private final static int INCREASE_RADIUS_SIZE = 1;      //default=1, should keep between 1-10
+    private final static int POINTS_INCREASE = 1;           //default=1
+    private final static int PLAYER_MOVEMENT_SPEED = 10;    //default=10, 10 is good
 
     private Paint mPaint;
     private Circle mPlayerCircle;
@@ -62,7 +63,7 @@ public class GamePlayView extends View {
         mPaint.setColor(Color.BLACK);
         int startX = (mScreenWidth/2);
         int startY = (mScreenHeight)/20 * 15;
-        mPlayerCircle = new Circle(startX, startY, mRadius, mPaint);
+        mPlayerCircle = new Circle(startX, startY, DEFAULT_PLAYER_RADIUS, mPaint);
     }
 
     //needs to be able to dynamically get the current X/Y and add to it to change the position of
