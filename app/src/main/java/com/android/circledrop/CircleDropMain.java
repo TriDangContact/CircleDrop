@@ -62,26 +62,18 @@ import android.widget.Toast;
         getScreenSize();
 
         // first time a game is run, everything must be set manually
-        changeStateTo(NEW_STATE);
         newGame();
-        updateCommandBar();
 
         mLeftButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mNewState) {
-                    changeStateTo(PAUSE_STATE);
                     pauseGame();
-                    updateCommandBar();
                 }
                 else if (mStartState) {
-                    changeStateTo(PAUSE_STATE);
                     pauseGame();
-                    updateCommandBar();
                 } else if (mPauseState) {
-                    changeStateTo(START_STATE);
                     startGame();
-                    updateCommandBar();
                 } else if (mEndState) {
                     // no need, button should be disabled for this state
                 }
@@ -92,21 +84,13 @@ import android.widget.Toast;
             @Override
             public void onClick(View v) {
                 if (mNewState) {
-                    changeStateTo(START_STATE);
                     startGame();
-                    updateCommandBar();
                 } else if (mStartState) {
-                    changeStateTo(END_STATE);
                     endGame();
-                    updateCommandBar();
                 } else if (mPauseState) {
-                    changeStateTo(END_STATE);
                     endGame();
-                    updateCommandBar();
                 } else if (mEndState) {
-                    changeStateTo(NEW_STATE);
                     newGame();
-                    updateCommandBar();
                 }
             }
         });
@@ -174,9 +158,7 @@ import android.widget.Toast;
     @Override
     protected void onPause() {
         super.onPause();
-        changeStateTo(PAUSE_STATE);
         pauseGame();
-        updateCommandBar();
     }
 
     //should be called every time a button is clicked
@@ -217,6 +199,7 @@ import android.widget.Toast;
     private void newGame() {
         mCurrentScore = STARTING_SCORE;
         mCurrentLives = LIVES;
+        changeStateTo(NEW_STATE);
         updateCommandBar();
         // remove view if end game was previously pressed
         if (mEndGame) {
@@ -232,11 +215,15 @@ import android.widget.Toast;
     // increases by 1. This gets reset when the screen is cleared of obstacle circles
     private void startGame() {
         mGamePlayView.startAnimation();
+        changeStateTo(START_STATE);
+        updateCommandBar();
     }
 
     // obstacle circles stop moving and player should not be able to move black circle
     private void pauseGame() {
         mGamePlayView.pauseAnimation();
+        changeStateTo(PAUSE_STATE);
+        updateCommandBar();
         // should not allow player action besides command bar
     }
 
