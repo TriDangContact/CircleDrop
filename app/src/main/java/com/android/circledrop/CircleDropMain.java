@@ -231,6 +231,7 @@ import android.widget.Toast;
     private void endGame() {
         mGamePlayView.pauseAnimation();
         mEndGame = true;
+        mIsInMotion = false;
         changeStateTo(END_STATE);
         updateCommandBar();
     }
