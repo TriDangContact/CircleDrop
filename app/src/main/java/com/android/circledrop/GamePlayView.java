@@ -5,10 +5,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Build;
+import android.os.VibrationEffect;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
+import android.os.Vibrator;
 
 import java.util.ArrayList;
 
@@ -27,6 +30,8 @@ public class GamePlayView extends View {
     private Paint mPaint;
     private Circle mPlayerCircle;
     private TimeAnimator mTimeAnimator;
+    private Vibrator mVibrator;
+    private Context mContext;
 
     private int mRadius;
     private int mScreenWidth;
@@ -38,6 +43,7 @@ public class GamePlayView extends View {
 
     public GamePlayView(Context context, int width, int height, int score, int lives) {
         super(context);
+        mContext = context;
         mScreenWidth = width;
         mScreenHeight = height;
         mScore = score;
@@ -47,6 +53,7 @@ public class GamePlayView extends View {
 
     public GamePlayView(Context context, AttributeSet attr) {
         super(context, attr);
+        mContext = context;
         init();
     }
 
@@ -167,6 +174,7 @@ public class GamePlayView extends View {
                 if (circle.isLiveScoreUpdated() == false) {
                     Log.d(LOG_TAG, "/////SENDING MESSAGE");
                     mLives--;
+                    vibrate();
                     circle.setLiveScoreUpdated(true);
                 }
                 else {
@@ -237,6 +245,16 @@ public class GamePlayView extends View {
 
     public int getLives() {
         return mLives;
+    }
+
+    private void vibrate() {
+        mVibrator = (Vibrator) mContext.getSystemService(Context.VIBRATOR_SERVICE);
+        if (Build.VERSION.SDK_INT >= 26) {
+            mVibrator.vibrate(VibrationEffect.createOneShot(150, VibrationEffect.DEFAULT_AMPLITUDE));
+        }
+        else {
+            mVibrator.vibrate(150);
+        }
     }
 
 }

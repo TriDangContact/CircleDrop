@@ -1,7 +1,10 @@
 package com.android.circledrop;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Point;
+import android.os.Build;
+import android.os.VibrationEffect;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +16,7 @@ import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.os.Vibrator;
 
     public class CircleDropMain extends AppCompatActivity {
 
